@@ -21,6 +21,7 @@ add_executable(option_trading
     src/market_data.cpp
     src/paper_trading.cpp
     src/alpha_vantage_client.cpp
+    src/black_scholes_greeks.cpp
 )
 
 # Link libraries

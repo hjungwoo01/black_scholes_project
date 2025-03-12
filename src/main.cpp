@@ -1,5 +1,6 @@
 #include "../include/option.h"
 #include "../include/black_scholes.h"
+#include "../include/black_scholes_greeks.h"
 #include "../include/market_data.h"
 #include <iostream>
 #include <ctime>
@@ -31,7 +32,7 @@ std::time_t getNextFriday(int weeks_ahead) {
     return std::mktime(&time_info);
 }
 
-// Function to load a specific key from the .env file
+// Function to load a specific key from the .env file (unchanged)
 std::string loadEnvValue(const std::string& key, const std::string& filename) {
     std::ifstream file(filename);
     std::string line, var, value;
@@ -47,6 +48,65 @@ std::string loadEnvValue(const std::string& key, const std::string& filename) {
         file.close();
     }
     return "";
+}
+
+// Function to print option details with Greeks
+void printOptionDetailsWithGreeks(
+    const std::string& symbol,
+    double current_price,
+    double strike_price,
+    std::time_t expiry,
+    double time_to_expiry,
+    double risk_free_rate,
+    double volatility,
+    int dte
+) {
+    // Calculate option prices
+    double call_price = BlackScholes::calculateCallPrice(
+        current_price, strike_price, risk_free_rate, volatility, time_to_expiry
+    );
+    
+    double put_price = BlackScholes::calculatePutPrice(
+        current_price, strike_price, risk_free_rate, volatility, time_to_expiry
+    );
+    
+    // Calculate Greeks
+    OptionGreeks call_greeks = BlackScholesGreeks::calculateCallGreeks(
+        current_price, strike_price, risk_free_rate, volatility, time_to_expiry
+    );
+    
+    OptionGreeks put_greeks = BlackScholesGreeks::calculatePutGreeks(
+        current_price, strike_price, risk_free_rate, volatility, time_to_expiry
+    );
+    
+    // Print basic option information
+    std::cout << std::fixed << std::setprecision(2)
+              << std::left << std::setw(10) << strike_price << "| "
+              << std::setw(7) << std::put_time(std::localtime(&expiry), "%Y-%m-%d") << "     |"
+              << std::setw(10) << dte << "|"
+              << std::setw(10) << call_price << "      |"
+              << std::setw(10) << put_price
+              << "\n";
+    
+    // Print Greeks for call option
+    std::cout << "  Call Greeks: "
+              << "Δ=" << std::setprecision(3) << call_greeks.delta << " "
+              << "Γ=" << call_greeks.gamma << " "
+              << "Θ=" << call_greeks.theta << " "
+              << "ν=" << call_greeks.vega << " "
+              << "ρ=" << call_greeks.rho
+              << "\n";
+    
+    // Print Greeks for put option
+    std::cout << "  Put Greeks:  "
+              << "Δ=" << std::setprecision(3) << put_greeks.delta << " "
+              << "Γ=" << put_greeks.gamma << " "
+              << "Θ=" << put_greeks.theta << " "
+              << "ν=" << put_greeks.vega << " "
+              << "ρ=" << put_greeks.rho
+              << "\n";
+    
+    std::cout << "--------------------------------------------------------------------------------\n";
 }
 
 int main() {
@@ -83,7 +143,6 @@ int main() {
                     std::cout << "Retrying " << symbol << " (attempt " << retry+1 << "/" 
                               << MAX_RETRIES << "). Waiting " << RETRY_DELAY_SECONDS 
                               << " seconds..." << std::endl;
-                    
                     
                     std::this_thread::sleep_for(std::chrono::seconds(RETRY_DELAY_SECONDS));
                 }
@@ -123,21 +182,10 @@ int main() {
                     double time_to_expiry = difftime(expiry, now) / (60 * 60 * 24 * 365); // Convert to years
                     int dte = difftime(expiry, now) / (60 * 60 * 24); // Days to expiration
                     
-                    double call_price = BlackScholes::calculateCallPrice(
-                        *current_price, strike_price, risk_free_rate, volatility, time_to_expiry
+                    printOptionDetailsWithGreeks(
+                        symbol, *current_price, strike_price, expiry, 
+                        time_to_expiry, risk_free_rate, volatility, dte
                     );
-                    
-                    double put_price = BlackScholes::calculatePutPrice(
-                        *current_price, strike_price, risk_free_rate, volatility, time_to_expiry
-                    );
-                    
-                    std::cout << std::fixed << std::setprecision(2)
-                              << std::left << std::setw(10) << strike_price << "| "
-                              << std::setw(7) << std::put_time(std::localtime(&expiry), "%Y-%m-%d") << "     |"
-                              << std::setw(10) << dte << "|"
-                              << std::setw(10) << call_price << "      |"
-                              << std::setw(10) << put_price
-                              << "\n";
                 }
             }
             std::cout << "================================================================================\n";
