@@ -1,3 +1,4 @@
+#include "../include/options_calculator_gui.h"
 #include <QApplication>
 #include <QMainWindow>
 #include <QTabWidget>
@@ -30,6 +31,7 @@
 #include "../include/historical_volatility.h"
 #include "../include/monte_carlo.h"
 #include "../include/option_strategy.h"
+#include "options_calculator_gui.moc"
 
 class OptionsCalculatorGUI : public QMainWindow {
     Q_OBJECT

@@ -61,6 +61,9 @@ public:
     
     // Calculate maximum loss
     virtual double calculateMaxLoss() const = 0;
+
+    // Calculate profit/loss at a given underlying price
+    virtual double calculateProfitLoss(double stockPrice) const = 0;
     
     // Calculate breakeven points
     virtual std::vector<double> calculateBreakevens() const = 0;

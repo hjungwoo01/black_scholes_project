@@ -1,3 +1,4 @@
 .history
 build
 .env
+.DS_Store
