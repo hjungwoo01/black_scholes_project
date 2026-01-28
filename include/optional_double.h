@@ -4,10 +4,10 @@
 struct OptionalDouble {
     bool has_value_{false};
     double value_{0.0};
-    OptionalDouble() = default;
-    explicit OptionalDouble(double v) : has_value_(true), value_(v) {}
-    explicit operator bool() const { return has_value_; }
-    double operator*() const { return value_; }
+    OptionalDouble() noexcept = default;
+    explicit OptionalDouble(double v) noexcept : has_value_(true), value_(v) {}
+    explicit operator bool() const noexcept { return has_value_; }
+    double operator*() const noexcept { return value_; }
 };
 
 #endif

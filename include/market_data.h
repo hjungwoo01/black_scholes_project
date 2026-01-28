@@ -1,46 +1,42 @@
 #ifndef MARKET_DATA_H
 #define MARKET_DATA_H
 
+#include "data_feed_interface.h"
+#include "optional_double.h"
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <ctime>
-#include "optional_double.h"
-#include "alpha_vantage_client.h"
-
-struct StockPrice {
-    double price;
-    std::string timestamp;
-};
 
 class MarketDataProvider {
-private:
-    AlphaVantageClient api_client;
-    std::unordered_map<std::string, std::vector<StockPrice>> historical_prices;
-    std::unordered_map<std::string, double> current_prices;
-
 public:
-    // Constructor with API key
-    MarketDataProvider(const std::string& alpha_vantage_api_key);
+    /** Take ownership of a data feed (e.g. AlphaVantageFeed or PaperFeed). */
+    explicit MarketDataProvider(std::unique_ptr<DataFeedInterface> feed);
 
-    // Fetch and update current price from API
+    /** Backwards-compatible: build an AlphaVantageFeed from API key. */
+    explicit MarketDataProvider(const std::string& alpha_vantage_api_key);
+
+    MarketDataProvider(const MarketDataProvider&) = delete;
+    MarketDataProvider& operator=(const MarketDataProvider&) = delete;
+
     bool updateCurrentPrice(const std::string& symbol);
-
-    // Push/set current price (e.g. for testing or when price comes from another source)
     void setCurrentPrice(const std::string& symbol, double price);
-
-    // Get current price
     OptionalDouble getCurrentPrice(const std::string& symbol) const;
-    
-    // Fetch historical prices
+
     bool fetchHistoricalPrices(
-        const std::string& symbol, 
-        const std::string& start_date, 
+        const std::string& symbol,
+        const std::string& start_date,
         const std::string& end_date
     );
-    
-    // Get historical prices
+
     std::vector<StockPrice> getHistoricalPrices(const std::string& symbol) const;
+
+    /** Last error from the underlying feed, if any. */
+    std::string lastError() const;
+
+private:
+    std::unique_ptr<DataFeedInterface> feed_;
+    std::unordered_map<std::string, double> current_prices_cache_;
 };
 
-#endif // MARKET_DATA_H
+#endif

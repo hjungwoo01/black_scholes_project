@@ -66,6 +66,52 @@ Price options by simulation and compare to Black–Scholes.
 - **Market data:** Optional Alpha Vantage integration for current and historical prices (CLI).  
 - **Paper trading:** Simulated option positions, cash balance, and portfolio value (CLI).
 
+---
+
+## Architecture and features
+
+### Market data: DataFeedInterface
+
+- **`DataFeedInterface`** (ABC in `include/data_feed_interface.h`) defines: `getCurrentPrice`, `fetchHistoricalPrices`, `getHistoricalPrices`, optional `setCurrentPrice`, `lastError()`, and `isStaleQuote()`.
+- **Implementations:**
+  - **AlphaVantageFeed** — wraps `AlphaVantageClient`; handles errors and exposes `lastError()`.
+  - **PaperFeed** — in-memory only (no network), for paper trading and tests.
+- **MarketDataProvider** holds **`std::unique_ptr<DataFeedInterface>`** and delegates all calls to the feed. You can inject any feed (e.g. future Alpaca or Yahoo) by implementing the interface. A backwards-compatible constructor from API key builds `AlphaVantageFeed` internally.
+
+### Monte Carlo engine
+
+- **Parallel pricing:** Simulations are split into chunks and run via **`std::async`** (by hardware concurrency). Results are summed and discounted.
+- **Progress callback:** Overloads of `priceCallOption` / `pricePutOption` accept **`MonteCarloProgressCallback`** (`std::function<void(int done, int total)>`). The callback is invoked after each chunk so a UI can show progress. To avoid blocking the Qt event loop, run Monte Carlo in a worker (e.g. `QtConcurrent::run` or `QThread`) and use **`QMetaObject::invokeMethod(..., Qt::QueuedConnection)`** to update a progress bar on the main thread.
+
+### Advanced analytics
+
+- **Greeks:** All five (Delta, Gamma, Theta, Vega, Rho) are implemented in **BlackScholesGreeks** and displayed in the Option Calculator tab.
+- **Implied volatility:** **Newton–Raphson** in `BlackScholes::calculateImpliedVolatility`; a **Bisection** fallback runs when N–R fails (e.g. vega too small or no convergence) over vol in [0.0001, 5.0]. Optional next step: add an IV calculator in the Option Calculator tab (market price + Call/Put + “Solve IV” button and label).
+
+### Strategy P&L and charts
+
+- **P&L at expiry:** The Strategy Analyzer tab plots profit/loss vs. stock price using Qt Charts and **`OptionStrategy::calculateProfitLoss`**. Covered Call, Protective Put, Bull/Bear spreads, and Straddle implement it. Optional: add **Volatility Smile** (e.g. new tab with IV vs strike using Qt Charts).
+
+### Code quality (C++17)
+
+- Heavy math types passed by **`const &`** where appropriate; primitives by value.
+- **`noexcept`** on `OptionalDouble` and can be extended to other getters/helpers that don’t throw.
+- **`std::unique_ptr`** used for the data feed inside `MarketDataProvider`; strategy factory already returns `std::unique_ptr<OptionStrategy>`.
+
+---
+
+### Build and CMake
+
+- **New sources** in the build: `alpha_vantage_feed.cpp`, `paper_feed.cpp`, `monte_carlo.cpp` are included in both `option_trading` and `options_calculator_gui` targets. No new dependencies beyond existing Qt/CURL/json.
+
+### Testing / verification
+
+- **Unit**: Option Calculator and Strategy Analyzer should produce same Black–Scholes and Greeks after refactors.
+- **Monte Carlo**: Parallel vs same-seed sequential for stability; progress callback when wired to GUI.
+- **Data feed**: Run with PaperFeed (no API key) and AlphaVantageFeed; check `lastError()` and staleness/missing-strike handling in UI or logs.
+
+---
+
 ## Build
 
 - **Requirements:** CMake 3.14+, C++17, CURL. Optional: Qt5 (Core, Widgets, Charts) for the GUI; nlohmann/json is fetched by CMake if not installed.  

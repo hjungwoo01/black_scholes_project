@@ -1,59 +1,47 @@
-#include "../include/market_data.h"
-#include <stdexcept>
-#include <iomanip>
-#include <sstream>
-#include <ctime>
+#include "market_data.h"
+#include "alpha_vantage_feed.h"
+#include "paper_feed.h"
+#include <algorithm>
+
+MarketDataProvider::MarketDataProvider(std::unique_ptr<DataFeedInterface> feed)
+    : feed_(std::move(feed)) {}
 
 MarketDataProvider::MarketDataProvider(const std::string& alpha_vantage_api_key)
-    : api_client(alpha_vantage_api_key) {}
+    : feed_(std::make_unique<AlphaVantageFeed>(alpha_vantage_api_key)) {}
 
 bool MarketDataProvider::updateCurrentPrice(const std::string& symbol) {
-    auto price = api_client.getCurrentPrice(symbol);
+    OptionalDouble price = feed_->getCurrentPrice(symbol);
     if (price) {
-        current_prices[symbol] = *price;
+        current_prices_cache_[symbol] = *price;
         return true;
     }
     return false;
 }
 
 void MarketDataProvider::setCurrentPrice(const std::string& symbol, double price) {
-    current_prices[symbol] = price;
+    current_prices_cache_[symbol] = price;
+    feed_->setCurrentPrice(symbol, price);
 }
 
 OptionalDouble MarketDataProvider::getCurrentPrice(const std::string& symbol) const {
-    auto it = current_prices.find(symbol);
-    if (it != current_prices.end()) {
+    auto it = current_prices_cache_.find(symbol);
+    if (it != current_prices_cache_.end())
         return OptionalDouble(it->second);
-    }
-    return OptionalDouble();
+    return feed_->getCurrentPrice(symbol);
 }
 
 bool MarketDataProvider::fetchHistoricalPrices(
-    const std::string& symbol, 
-    const std::string& start_date, 
+    const std::string& symbol,
+    const std::string& start_date,
     const std::string& end_date
 ) {
-    // Fetch historical prices from Alpha Vantage
-    auto prices = api_client.getHistoricalPrices(symbol, start_date, end_date);
-    
-    if (prices.empty()) {
-        return false;
-    }
-    
-    // Convert and store historical prices
-    std::vector<StockPrice> stock_prices;
-    for (const auto& [date, price] : prices) {
-        stock_prices.push_back({price, date});
-    }
-    
-    historical_prices[symbol] = stock_prices;
-    return true;
+    return feed_->fetchHistoricalPrices(symbol, start_date, end_date);
 }
 
 std::vector<StockPrice> MarketDataProvider::getHistoricalPrices(const std::string& symbol) const {
-    auto it = historical_prices.find(symbol);
-    if (it != historical_prices.end()) {
-        return it->second;
-    }
-    return {};
+    return feed_->getHistoricalPrices(symbol);
+}
+
+std::string MarketDataProvider::lastError() const {
+    return feed_ ? feed_->lastError() : std::string();
 }

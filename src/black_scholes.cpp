@@ -100,7 +100,36 @@ double BlackScholes::calculatePutPrice(
            spot_price * standardNormalCDF(-d1);
 }
 
-// Calculate Implied Volatility using Newton-Raphson method
+namespace {
+// Bisection fallback when Newton-Raphson fails (e.g. vega too small)
+double impliedVolatilityBisection(double market_price, double spot_price, double strike_price,
+                                  double risk_free_rate, double time_to_expiry, OptionType option_type) {
+    const double vol_lo = 0.0001;
+    const double vol_hi = 5.0;
+    const int max_it = 80;
+    const double tol = 1e-5;
+    double a = vol_lo, b = vol_hi;
+    auto model = [&](double sig) {
+        if (option_type == CALL)
+            return BlackScholes::calculateCallPrice(spot_price, strike_price, risk_free_rate, sig, time_to_expiry);
+        return BlackScholes::calculatePutPrice(spot_price, strike_price, risk_free_rate, sig, time_to_expiry);
+    };
+    double fa = model(a) - market_price;
+    double fb = model(b) - market_price;
+    if (fa * fb > 0) return 0.3;
+    for (int i = 0; i < max_it; ++i) {
+        double c = 0.5 * (a + b);
+        if ((b - a) * 0.5 < tol) return c;
+        double fc = model(c) - market_price;
+        if (std::abs(fc) < tol) return c;
+        if (fa * fc < 0) { b = c; fb = fc; }
+        else { a = c; fa = fc; }
+    }
+    return 0.5 * (a + b);
+}
+}
+
+// Implied Volatility: Newton-Raphson with Bisection fallback
 double BlackScholes::calculateImpliedVolatility(
     double market_price,
     double spot_price,
@@ -137,10 +166,10 @@ double BlackScholes::calculateImpliedVolatility(
             return volatility;
         }
         if (vega < 1e-15) {
-            break;
+            return impliedVolatilityBisection(market_price, spot_price, strike_price, risk_free_rate, time_to_expiry, option_type);
         }
         volatility -= price_diff / vega;
         volatility = std::max(0.0001, std::min(volatility, 5.0));
     }
-    return volatility;
+    return impliedVolatilityBisection(market_price, spot_price, strike_price, risk_free_rate, time_to_expiry, option_type);
 }

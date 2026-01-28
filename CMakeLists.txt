@@ -42,7 +42,10 @@ add_executable(option_trading
   src/market_data.cpp
   src/paper_trading.cpp
   src/alpha_vantage_client.cpp
+  src/alpha_vantage_feed.cpp
+  src/paper_feed.cpp
   src/black_scholes_greeks.cpp
+  src/monte_carlo.cpp
 )
 target_link_libraries(option_trading PRIVATE
   CURL::libcurl
@@ -65,7 +68,10 @@ if(BUILD_GUI)
     src/black_scholes.cpp
     src/market_data.cpp
     src/alpha_vantage_client.cpp
+    src/alpha_vantage_feed.cpp
+    src/paper_feed.cpp
     src/black_scholes_greeks.cpp
+    src/monte_carlo.cpp
   )
   set_target_properties(options_calculator_gui PROPERTIES
     AUTOMOC ON
