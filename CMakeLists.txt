@@ -3,6 +3,8 @@ project(BlackScholesOptionTrading LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Let the IDE use exact compiler flags (fixes includePath / include errors)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # nlohmann_json: fetch if not found (v3.12+ has CMake 3.5+ compatible config)
 find_package(nlohmann_json 3.2.0 QUIET)

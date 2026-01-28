@@ -50,7 +50,7 @@ std::string AlphaVantageClient::performHttpGet(const std::string& url) {
 }
 
 // Get current stock price
-std::optional<double> AlphaVantageClient::getCurrentPrice(const std::string& symbol) {
+OptionalDouble AlphaVantageClient::getCurrentPrice(const std::string& symbol) {
     // Add a small delay to respect API rate limits
     std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
@@ -69,15 +69,15 @@ std::optional<double> AlphaVantageClient::getCurrentPrice(const std::string& sym
         // Extract price
         if (json.contains("Global Quote") && 
             json["Global Quote"].contains("05. price")) {
-            return std::stod(json["Global Quote"]["05. price"].get<std::string>());
+            return OptionalDouble(std::stod(json["Global Quote"]["05. price"].get<std::string>()));
         }
 
         std::cerr << "No price data found for " << symbol << std::endl;
-        return std::nullopt;
+        return OptionalDouble();
     }
     catch (const std::exception& e) {
         std::cerr << "Error fetching current price for " << symbol << ": " << e.what() << std::endl;
-        return std::nullopt;
+        return OptionalDouble();
     }
 }
 
@@ -130,7 +130,8 @@ std::vector<std::pair<std::string, double>> AlphaVantageClient::getHistoricalPri
 }
 
 // Get implied volatility (Note: Alpha Vantage doesn't directly provide this)
-std::optional<double> AlphaVantageClient::getImpliedVolatility(const std::string& symbol) {
+OptionalDouble AlphaVantageClient::getImpliedVolatility(const std::string& symbol) {
     // This is a placeholder. Actual implied volatility is not directly available in the free Alpha Vantage API
-    return std::nullopt;
+    (void)symbol;
+    return OptionalDouble();
 }

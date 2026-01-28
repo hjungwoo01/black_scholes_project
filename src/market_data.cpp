@@ -20,12 +20,12 @@ void MarketDataProvider::setCurrentPrice(const std::string& symbol, double price
     current_prices[symbol] = price;
 }
 
-std::optional<double> MarketDataProvider::getCurrentPrice(const std::string& symbol) const {
+OptionalDouble MarketDataProvider::getCurrentPrice(const std::string& symbol) const {
     auto it = current_prices.find(symbol);
     if (it != current_prices.end()) {
-        return it->second;
+        return OptionalDouble(it->second);
     }
-    return std::nullopt;
+    return OptionalDouble();
 }
 
 bool MarketDataProvider::fetchHistoricalPrices(

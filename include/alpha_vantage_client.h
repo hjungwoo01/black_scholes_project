@@ -4,11 +4,11 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include <optional>
 #include <iostream>
 #include <thread>
 #include <chrono>
 #include <nlohmann/json.hpp>
+#include "optional_double.h"
 
 class AlphaVantageClient {
 public:
@@ -16,7 +16,7 @@ public:
     explicit AlphaVantageClient(const std::string& api_key);
 
     // Fetch current stock quote
-    std::optional<double> getCurrentPrice(const std::string& symbol);
+    OptionalDouble getCurrentPrice(const std::string& symbol);
 
     // Fetch historical daily prices
     std::vector<std::pair<std::string, double>> getHistoricalPrices(
@@ -26,7 +26,7 @@ public:
     );
 
     // Fetch implied volatility (if available)
-    std::optional<double> getImpliedVolatility(const std::string& symbol);
+    OptionalDouble getImpliedVolatility(const std::string& symbol);
 
 private:
     std::string api_key;

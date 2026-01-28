@@ -5,8 +5,8 @@
 #include <unordered_map>
 #include <vector>
 #include <ctime>
-#include <optional>
-#include "../include/alpha_vantage_client.h"
+#include "optional_double.h"
+#include "alpha_vantage_client.h"
 
 struct StockPrice {
     double price;
@@ -30,7 +30,7 @@ public:
     void setCurrentPrice(const std::string& symbol, double price);
 
     // Get current price
-    std::optional<double> getCurrentPrice(const std::string& symbol) const;
+    OptionalDouble getCurrentPrice(const std::string& symbol) const;
     
     // Fetch historical prices
     bool fetchHistoricalPrices(
