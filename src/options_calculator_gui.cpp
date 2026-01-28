@@ -31,13 +31,8 @@
 #include "../include/historical_volatility.h"
 #include "../include/monte_carlo.h"
 #include "../include/option_strategy.h"
-#include "options_calculator_gui.moc"
 
-class OptionsCalculatorGUI : public QMainWindow {
-    Q_OBJECT
-
-public:
-    OptionsCalculatorGUI(QWidget *parent = nullptr) : QMainWindow(parent) {
+OptionsCalculatorGUI::OptionsCalculatorGUI(QWidget *parent) : QMainWindow(parent) {
         setWindowTitle("Options Calculator");
         resize(1200, 800);
         
@@ -51,10 +46,9 @@ public:
         createMonteCarloTab(tabWidget);
         
         setCentralWidget(tabWidget);
-    }
+}
 
-private slots:
-    void calculateOptionPrices() {
+void OptionsCalculatorGUI::calculateOptionPrices() {
         QString symbol = symbolInput->text().trimmed();
         if (symbol.isEmpty()) {
             QMessageBox::warning(this, "Error", "Please enter a stock symbol");
@@ -103,9 +97,9 @@ private slots:
         putThetaOutput->setText(QString::number(putGreeks.theta, 'f', 4));
         putVegaOutput->setText(QString::number(putGreeks.vega, 'f', 4));
         putRhoOutput->setText(QString::number(putGreeks.rho, 'f', 4));
-    }
-    
-    void analyzeStrategy() {
+}
+
+void OptionsCalculatorGUI::analyzeStrategy() {
         QString symbol = strategySymbolInput->text().trimmed();
         if (symbol.isEmpty()) {
             QMessageBox::warning(this, "Error", "Please enter a stock symbol");
@@ -161,9 +155,9 @@ private slots:
         } catch (const std::exception& e) {
             QMessageBox::warning(this, "Error", QString("Strategy calculation failed: %1").arg(e.what()));
         }
-    }
-    
-    void calculateHistoricalVolatility() {
+}
+
+void OptionsCalculatorGUI::calculateHistoricalVolatility() {
         QString symbol = volSymbolInput->text().trimmed();
         if (symbol.isEmpty()) {
             QMessageBox::warning(this, "Error", "Please enter a stock symbol");
@@ -211,9 +205,9 @@ private slots:
         } catch (const std::exception& e) {
             QMessageBox::warning(this, "Error", QString("Volatility calculation failed: %1").arg(e.what()));
         }
-    }
-    
-    void runMonteCarloSimulation() {
+}
+
+void OptionsCalculatorGUI::runMonteCarloSimulation() {
         double spotPrice = mcSpotPriceInput->value();
         double strikePrice = mcStrikePriceInput->value();
         double riskFreeRate = mcRiskFreeRateInput->value() / 100.0;
@@ -254,62 +248,9 @@ private slots:
         } catch (const std::exception& e) {
             QMessageBox::warning(this, "Error", QString("Monte Carlo simulation failed: %1").arg(e.what()));
         }
-    }
+}
 
-private:
-    // Option Calculator Tab UI elements
-    QLineEdit *symbolInput;
-    QDoubleSpinBox *spotPriceInput;
-    QDoubleSpinBox *strikePriceInput;
-    QDoubleSpinBox *riskFreeRateInput;
-    QDoubleSpinBox *volatilityInput;
-    QSpinBox *daysToExpiryInput;
-    QLabel *callPriceOutput;
-    QLabel *putPriceOutput;
-    QLabel *callDeltaOutput;
-    QLabel *callGammaOutput;
-    QLabel *callThetaOutput;
-    QLabel *callVegaOutput;
-    QLabel *callRhoOutput;
-    QLabel *putDeltaOutput;
-    QLabel *putGammaOutput;
-    QLabel *putThetaOutput;
-    QLabel *putVegaOutput;
-    QLabel *putRhoOutput;
-    
-    // Strategy Analyzer Tab UI elements
-    QLineEdit *strategySymbolInput;
-    QDoubleSpinBox *strategySpotPriceInput;
-    QDoubleSpinBox *strategyRiskFreeRateInput;
-    QDoubleSpinBox *strategyVolatilityInput;
-    QSpinBox *strategyDaysToExpiryInput;
-    QComboBox *strategyTypeCombo;
-    QLabel *strategyMaxProfitOutput;
-    QLabel *strategyMaxLossOutput;
-    QLabel *strategyBreakevenOutput;
-    QtCharts::QChartView *strategyChartView;
-    
-    // Volatility Analyzer Tab UI elements
-    QLineEdit *volSymbolInput;
-    QSpinBox *volDaysInput;
-    QLabel *volResultOutput;
-    QTableWidget *volHistoryTable;
-    QtCharts::QChartView *volChartView;
-    
-    // Monte Carlo Tab UI elements
-    QDoubleSpinBox *mcSpotPriceInput;
-    QDoubleSpinBox *mcStrikePriceInput;
-    QDoubleSpinBox *mcRiskFreeRateInput;
-    QDoubleSpinBox *mcVolatilityInput;
-    QSpinBox *mcDaysToExpiryInput;
-    QSpinBox *mcSimCountInput;
-    QLabel *mcCallPriceOutput;
-    QLabel *mcPutPriceOutput;
-    QLabel *bsCallPriceOutput;
-    QLabel *bsPutPriceOutput;
-    QtCharts::QChartView *mcChartView;
-    
-    void createOptionCalculatorTab(QTabWidget *tabWidget) {
+void OptionsCalculatorGUI::createOptionCalculatorTab(QTabWidget *tabWidget) {
         QWidget *tab = new QWidget();
         QVBoxLayout *layout = new QVBoxLayout();
         
@@ -429,7 +370,7 @@ private:
         tabWidget->addTab(tab, "Option Calculator");
     }
     
-    void createStrategyAnalyzerTab(QTabWidget *tabWidget) {
+void OptionsCalculatorGUI::createStrategyAnalyzerTab(QTabWidget *tabWidget) {
         QWidget *tab = new QWidget();
         QVBoxLayout *layout = new QVBoxLayout();
         
@@ -518,7 +459,7 @@ private:
         tabWidget->addTab(tab, "Strategy Analyzer");
     }
     
-    void createVolatilityAnalyzerTab(QTabWidget *tabWidget) {
+void OptionsCalculatorGUI::createVolatilityAnalyzerTab(QTabWidget *tabWidget) {
         QWidget *tab = new QWidget();
         QVBoxLayout *layout = new QVBoxLayout();
         
@@ -571,7 +512,7 @@ private:
         tabWidget->addTab(tab, "Volatility Analyzer");
     }
     
-    void createMonteCarloTab(QTabWidget *tabWidget) {
+void OptionsCalculatorGUI::createMonteCarloTab(QTabWidget *tabWidget) {
         QWidget *tab = new QWidget();
         QVBoxLayout *layout = new QVBoxLayout();
         
@@ -664,7 +605,7 @@ private:
         tabWidget->addTab(tab, "Monte Carlo");
     }
     
-    void updateStrategyChart(OptionStrategy* strategy, double spotPrice, int daysToExpiry, double riskFreeRate, double volatility) {
+void OptionsCalculatorGUI::updateStrategyChart(OptionStrategy* strategy, double spotPrice, int daysToExpiry, double riskFreeRate, double volatility) {
         const int numPoints = 100;
         double minPrice = spotPrice * 0.7;
         double maxPrice = spotPrice * 1.3;
@@ -714,7 +655,7 @@ private:
         strategyChartView->setRenderHint(QPainter::Antialiasing);
     }
     
-    void updateVolatilityChart(const std::vector<double>& prices) {
+void OptionsCalculatorGUI::updateVolatilityChart(const std::vector<double>& prices) {
         QtCharts::QChart *chart = new QtCharts::QChart();
         chart->setTitle("Historical Volatility Analysis");
         
@@ -760,9 +701,9 @@ private:
         
         volChartView->setChart(chart);
         volChartView->setRenderHint(QPainter::Antialiasing);
-    }
-    
-    void updateMonteCarloChart(double spotPrice, double riskFreeRate, double volatility, double timeToExpiry) {
+}
+
+void OptionsCalculatorGUI::updateMonteCarloChart(double spotPrice, double riskFreeRate, double volatility, double timeToExpiry) {
         QtCharts::QChart *chart = new QtCharts::QChart();
         chart->setTitle("Monte Carlo Price Paths");
         
@@ -784,9 +725,8 @@ private:
                 
                 // GBM equation
                 double drift = (riskFreeRate - 0.5 * volatility * volatility) * dt;
-                double diffusion = volatility * sqrt(dt) * z;
-                
-                currentPrice = currentPrice * exp(drift + diffusion);
+                double diffusion = volatility * std::sqrt(dt) * z;
+                currentPrice = currentPrice * std::exp(drift + diffusion);
                 series->append(step * (timeToExpiry * 365) / stepsPerPath, currentPrice);
             }
             
@@ -811,13 +751,11 @@ private:
         
         mcChartView->setChart(chart);
         mcChartView->setRenderHint(QPainter::Antialiasing);
-    }
-    
-    double generateNormalRandom() {
-        // Box-Muller transform to generate normal random numbers
-        double u1 = static_cast<double>(rand()) / RAND_MAX;
-        double u2 = static_cast<double>(rand()) / RAND_MAX;
-        
-        return sqrt(-2.0 * log(u1)) * cos(2.0 * M_PI * u2);
-    }
-};
+}
+
+double OptionsCalculatorGUI::generateNormalRandom() {
+    // Box-Muller transform to generate normal random numbers
+    double u1 = static_cast<double>(rand()) / RAND_MAX;
+    double u2 = static_cast<double>(rand()) / RAND_MAX;
+    return std::sqrt(-2.0 * std::log(u1)) * std::cos(2.0 * M_PI * u2);
+}

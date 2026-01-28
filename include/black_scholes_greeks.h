@@ -3,16 +3,20 @@
 
 #include <cmath>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 // Forward declaration of existing BlackScholes functions
 class BlackScholes;
 
 // Structure to hold all Greek values for an option
 struct OptionGreeks {
-    double delta;  // Change in option price for a $1 change in underlying price
-    double gamma;  // Rate of change of delta with respect to underlying price
-    double theta;  // Rate of change of option value with respect to time (time decay)
-    double vega;   // Rate of change of option value with respect to volatility
-    double rho;    // Rate of change of option value with respect to interest rate
+    double delta{0.0};
+    double gamma{0.0};
+    double theta{0.0};
+    double vega{0.0};
+    double rho{0.0};
 };
 
 class BlackScholesGreeks {

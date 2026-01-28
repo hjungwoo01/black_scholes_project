@@ -13,15 +13,9 @@ static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::stri
     return total_size;
 }
 
-// Constructor
-AlphaVantageClient::AlphaVantageClient(const std::string& api_key) 
+// Constructor (empty API key allowed for offline/demo use; API calls will fail until key is set)
+AlphaVantageClient::AlphaVantageClient(const std::string& api_key)
     : api_key(api_key) {
-    // Validate API key
-    if (api_key.empty()) {
-        throw std::invalid_argument("Alpha Vantage API key cannot be empty");
-    }
-
-    // Initialize libcurl
     curl_global_init(CURL_GLOBAL_DEFAULT);
 }
 

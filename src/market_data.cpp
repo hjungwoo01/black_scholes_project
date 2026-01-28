@@ -9,13 +9,15 @@ MarketDataProvider::MarketDataProvider(const std::string& alpha_vantage_api_key)
 
 bool MarketDataProvider::updateCurrentPrice(const std::string& symbol) {
     auto price = api_client.getCurrentPrice(symbol);
-    
     if (price) {
         current_prices[symbol] = *price;
         return true;
     }
-    
     return false;
+}
+
+void MarketDataProvider::setCurrentPrice(const std::string& symbol, double price) {
+    current_prices[symbol] = price;
 }
 
 std::optional<double> MarketDataProvider::getCurrentPrice(const std::string& symbol) const {

@@ -23,9 +23,12 @@ public:
     // Constructor with API key
     MarketDataProvider(const std::string& alpha_vantage_api_key);
 
-    // Fetch and update current price
+    // Fetch and update current price from API
     bool updateCurrentPrice(const std::string& symbol);
-    
+
+    // Push/set current price (e.g. for testing or when price comes from another source)
+    void setCurrentPrice(const std::string& symbol, double price);
+
     // Get current price
     std::optional<double> getCurrentPrice(const std::string& symbol) const;
     

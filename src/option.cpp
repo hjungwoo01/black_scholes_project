@@ -1,10 +1,10 @@
 #include "../include/option.h"
 
-Option::Option(const std::string& symbol, OptionType type, double strike, std::time_t expiry)
-    : symbol(symbol), type(type), strike_price(strike), expiration_date(expiry), current_price(0.0) {}
+Option::Option(const std::string& underlying_symbol, OptionType type, double strike, std::time_t expiry)
+    : underlying_symbol(underlying_symbol), type(type), strike_price(strike), expiration_date(expiry), current_price(0.0) {}
 
 std::string Option::getSymbol() const {
-    return symbol;
+    return underlying_symbol;
 }
 
 OptionType Option::getType() const {

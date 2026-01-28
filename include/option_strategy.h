@@ -194,6 +194,13 @@ public:
         double breakeven = entry_stock_price - call_premium;
         return {breakeven};
     }
+
+    double calculateProfitLoss(double stockPrice) const override {
+        double strike = options.empty() ? 0.0 : options[0].getStrikePrice();
+        double intrinsic_short_call = 100.0 * std::max(0.0, stockPrice - strike);
+        double value = stock_position * stockPrice - intrinsic_short_call;
+        return value - entry_price;
+    }
 };
 
 // Protective Put Strategy Implementation
@@ -295,6 +302,13 @@ public:
         double breakeven = entry_stock_price + put_premium;
         return {breakeven};
     }
+
+    double calculateProfitLoss(double stockPrice) const override {
+        double strike = options.empty() ? 0.0 : options[0].getStrikePrice();
+        double intrinsic_long_put = 100.0 * std::max(0.0, strike - stockPrice);
+        double value = stock_position * stockPrice + intrinsic_long_put;
+        return value - entry_price;
+    }
 };
 
 // Bull Call Spread Strategy Implementation
@@ -393,6 +407,13 @@ public:
         double breakeven = long_call_strike + net_premium_per_share;
         return {breakeven};
     }
+
+    double calculateProfitLoss(double stockPrice) const override {
+        double long_val = std::max(0.0, stockPrice - long_call_strike);
+        double short_val = std::max(0.0, stockPrice - short_call_strike);
+        double value = (long_val - short_val) * 100.0;
+        return value - entry_price;
+    }
 };
 
 // Bear Put Spread Strategy Implementation
@@ -490,6 +511,13 @@ public:
         double net_premium_per_share = entry_price / 100;
         double breakeven = long_put_strike - net_premium_per_share;
         return {breakeven};
+    }
+
+    double calculateProfitLoss(double stockPrice) const override {
+        double long_val = std::max(0.0, long_put_strike - stockPrice);
+        double short_val = std::max(0.0, short_put_strike - stockPrice);
+        double value = (long_val - short_val) * 100.0;
+        return value - entry_price;
     }
 };
 
@@ -590,10 +618,17 @@ public:
         double upper_breakeven = strike_price + total_premium_per_share;
         return {lower_breakeven, upper_breakeven};
     }
+
+    double calculateProfitLoss(double stockPrice) const override {
+        double call_val = std::max(0.0, stockPrice - strike_price);
+        double put_val = std::max(0.0, strike_price - stockPrice);
+        double value = (call_val + put_val) * 100.0;
+        return value - entry_price;
+    }
 };
 
-// Implementation of the factory method
-std::unique_ptr<OptionStrategy> OptionStrategyFactory::createStrategy(
+// Implementation of the factory method (inline to avoid duplicate symbols when header is included in multiple TUs)
+inline std::unique_ptr<OptionStrategy> OptionStrategyFactory::createStrategy(
     StrategyType type,
     const std::string& symbol,
     double current_price,

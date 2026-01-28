@@ -6,6 +6,7 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include <ctime>
 
 struct OptionPosition {
     Option option;
@@ -28,11 +29,17 @@ public:
     // Trading operations
     bool buyOption(const Option& option, int quantity);
     bool sellOption(const Option& option, int quantity);
-    
+
+    // Update option fair-value prices from market data (underlying price -> Black-Scholes)
+    void updateOptionPricesFromMarket(double risk_free_rate, double volatility);
+
+    // Expose market data for pushing prices (e.g. setCurrentPrice after API fetch)
+    MarketDataProvider& getMarketData();
+
     // Portfolio management
     double calculatePortfolioValue() const;
     void closeExpiredPositions();
-    
+
     // Reporting
     void printPortfolio() const;
     double getCashBalance() const;

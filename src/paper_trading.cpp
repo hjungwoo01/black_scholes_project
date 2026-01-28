@@ -4,13 +4,39 @@
 #include <algorithm>
 #include <stdexcept>
 #include <iomanip>
+#include <ctime>
+#include <cmath>
 
 // Constructor with initial balance and API key
-PaperTradingSystem::PaperTradingSystem(double initial_balance, const std::string& alpha_vantage_api_key) 
-    : cash_balance(initial_balance), 
+PaperTradingSystem::PaperTradingSystem(double initial_balance, const std::string& alpha_vantage_api_key)
+    : cash_balance(initial_balance),
       initial_balance(initial_balance),
       market_data(alpha_vantage_api_key)
 {
+}
+
+void PaperTradingSystem::updateOptionPricesFromMarket(double risk_free_rate, double volatility) {
+    const std::time_t now = std::time(nullptr);
+    for (auto& position : open_positions) {
+        const std::string underlying = position.option.getSymbol();
+        auto spot_opt = market_data.getCurrentPrice(underlying);
+        if (!spot_opt || *spot_opt <= 0) continue;
+        double spot = *spot_opt;
+        double time_to_expiry = std::max(0.0, std::difftime(position.option.getExpirationDate(), now) / (365.25 * 24 * 60 * 60));
+        double fair_value;
+        if (position.option.getType() == CALL) {
+            fair_value = BlackScholes::calculateCallPrice(spot, position.option.getStrikePrice(),
+                                                          risk_free_rate, volatility, time_to_expiry);
+        } else {
+            fair_value = BlackScholes::calculatePutPrice(spot, position.option.getStrikePrice(),
+                                                         risk_free_rate, volatility, time_to_expiry);
+        }
+        position.option.setCurrentPrice(fair_value);
+    }
+}
+
+MarketDataProvider& PaperTradingSystem::getMarketData() {
+    return market_data;
 }
 
 bool PaperTradingSystem::buyOption(const Option& option, int quantity) {

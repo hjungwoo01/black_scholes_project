@@ -2,6 +2,7 @@
 #include "../include/black_scholes.h"
 #include "../include/black_scholes_greeks.h"
 #include "../include/market_data.h"
+#include "../include/paper_trading.h"
 #include <iostream>
 #include <ctime>
 #include <iomanip>
@@ -110,13 +111,53 @@ void printOptionDetailsWithGreeks(
 }
 
 int main() {
+    std::cout << "\n========== Black-Scholes Options Pricing and Paper Trading System ==========\n";
+
+    // --- Demo 1: Single Black-Scholes price calculation (no API) ---
+    {
+        const double S = 100.0;
+        const double K = 105.0;
+        const double r = 0.05;
+        const double sigma = 0.25;
+        const double T = 0.5;  // 6 months in years
+        double call_price = BlackScholes::calculateCallPrice(S, K, r, sigma, T);
+        double put_price = BlackScholes::calculatePutPrice(S, K, r, sigma, T);
+        std::cout << std::fixed << std::setprecision(4);
+        std::cout << "\n--- Demo: Single option price ---\n";
+        std::cout << "  Spot S=" << S << ", Strike K=" << K << ", r=" << r << ", sigma=" << sigma << ", T=" << T << " yr\n";
+        std::cout << "  Call price = " << call_price << "\n";
+        std::cout << "  Put price  = " << put_price << "\n";
+    }
+
+    // --- Demo 2: Simulated paper trade (no API) ---
+    {
+        std::cout << "\n--- Demo: Simulated paper trade ---\n";
+        PaperTradingSystem paper(10000.0, "");  // $10k initial; API key may be empty for demo
+        // Push underlying price into market data (simulated)
+        paper.getMarketData().setCurrentPrice("AAPL", 150.0);
+        std::time_t expiry = getNextFriday(2);
+        Option call_option("AAPL", CALL, 155.0, expiry);
+        std::time_t now = std::time(nullptr);
+        double time_to_expiry = std::max(0.0, std::difftime(expiry, now) / (365.25 * 24 * 60 * 60));
+        double fair_value = BlackScholes::calculateCallPrice(150.0, 155.0, 0.02, 0.3, time_to_expiry);
+        call_option.setCurrentPrice(fair_value);
+        std::cout << std::fixed << std::setprecision(2);
+        std::cout << "  AAPL @ $150, Call K=$155, T=" << time_to_expiry << " yr -> fair value $"
+                  << fair_value << "\n";
+        bool bought = paper.buyOption(call_option, 1);
+        if (bought) {
+            paper.printPortfolio();
+        }
+        std::cout << "\n";
+    }
+
     std::string alpha_vantage_api_key = loadEnvValue("ALPHA_VANTAGE_API_KEY", ".env");
-    
+
     // Constants for retry logic
     const int MAX_RETRIES = 3;
     const int RETRY_DELAY_SECONDS = 3; // Increased delay between retries
     const int API_CALL_DELAY_SECONDS = 1; // Delay between API calls for different symbols
-    
+
     try {
         // Create market data provider
         MarketDataProvider market_data(alpha_vantage_api_key);

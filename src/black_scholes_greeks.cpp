@@ -1,5 +1,10 @@
 #include "../include/black_scholes_greeks.h"
 
+namespace {
+constexpr double MIN_VOLATILITY = 1e-10;
+constexpr double MIN_TIME_TO_EXPIRY = 1e-10;
+}
+
 // Calculate all Greeks for a call option
 OptionGreeks BlackScholesGreeks::calculateCallGreeks(
     double spot_price,
@@ -9,36 +14,26 @@ OptionGreeks BlackScholesGreeks::calculateCallGreeks(
     double time_to_expiry
 ) {
     OptionGreeks greeks;
-    
-    // Calculate d1 and d2 (key components of Black-Scholes formula)
-    double d1 = (std::log(spot_price / strike_price) + 
-               (risk_free_rate + 0.5 * volatility * volatility) * time_to_expiry) 
-              / (volatility * std::sqrt(time_to_expiry));
-    
-    double d2 = d1 - volatility * std::sqrt(time_to_expiry);
-    
-    // Calculate delta (1st derivative with respect to underlying price)
+    if (spot_price <= 0 || strike_price <= 0 || time_to_expiry < MIN_TIME_TO_EXPIRY || volatility < MIN_VOLATILITY) {
+        return greeks;
+    }
+
+    const double sigma_sqrt_T = volatility * std::sqrt(time_to_expiry);
+    double d1 = (std::log(spot_price / strike_price) +
+                 (risk_free_rate + 0.5 * volatility * volatility) * time_to_expiry)
+                / sigma_sqrt_T;
+    double d2 = d1 - sigma_sqrt_T;
+
     greeks.delta = standardNormalCDF(d1);
-    
-    // Calculate gamma (2nd derivative with respect to underlying price)
-    greeks.gamma = standardNormalPDF(d1) / (spot_price * volatility * std::sqrt(time_to_expiry));
-    
-    // Calculate theta (1st derivative with respect to time)
-    // Note: Theta is usually expressed as the daily decay, so we convert from years to days
-    double theta = -spot_price * standardNormalPDF(d1) * volatility / (2 * std::sqrt(time_to_expiry)) 
-                   - risk_free_rate * strike_price * std::exp(-risk_free_rate * time_to_expiry) 
+    greeks.gamma = standardNormalPDF(d1) / (spot_price * sigma_sqrt_T);
+    double theta = -spot_price * standardNormalPDF(d1) * volatility / (2 * std::sqrt(time_to_expiry))
+                   - risk_free_rate * strike_price * std::exp(-risk_free_rate * time_to_expiry)
                    * standardNormalCDF(d2);
-    greeks.theta = theta / 365.0; // Convert from per-year to per-day
-    
-    // Calculate vega (1st derivative with respect to volatility)
-    // Note: Vega is traditionally expressed as change for a 1% change in volatility
+    greeks.theta = theta / 365.0;
     greeks.vega = spot_price * std::sqrt(time_to_expiry) * standardNormalPDF(d1) / 100.0;
-    
-    // Calculate rho (1st derivative with respect to interest rate)
-    // Note: Rho is traditionally expressed as change for a 1% change in interest rate
-    greeks.rho = strike_price * time_to_expiry * std::exp(-risk_free_rate * time_to_expiry) 
-                * standardNormalCDF(d2) / 100.0;
-    
+    greeks.rho = strike_price * time_to_expiry * std::exp(-risk_free_rate * time_to_expiry)
+                 * standardNormalCDF(d2) / 100.0;
+
     return greeks;
 }
 
@@ -51,37 +46,25 @@ OptionGreeks BlackScholesGreeks::calculatePutGreeks(
     double time_to_expiry
 ) {
     OptionGreeks greeks;
-    
-    // Calculate d1 and d2 (key components of Black-Scholes formula)
-    double d1 = (std::log(spot_price / strike_price) + 
-               (risk_free_rate + 0.5 * volatility * volatility) * time_to_expiry) 
-              / (volatility * std::sqrt(time_to_expiry));
-    
-    double d2 = d1 - volatility * std::sqrt(time_to_expiry);
-    
-    // Calculate delta (1st derivative with respect to underlying price)
+    if (spot_price <= 0 || strike_price <= 0 || time_to_expiry < MIN_TIME_TO_EXPIRY || volatility < MIN_VOLATILITY) {
+        return greeks;
+    }
+
+    const double sigma_sqrt_T = volatility * std::sqrt(time_to_expiry);
+    double d1 = (std::log(spot_price / strike_price) +
+                 (risk_free_rate + 0.5 * volatility * volatility) * time_to_expiry)
+                / sigma_sqrt_T;
+    double d2 = d1 - sigma_sqrt_T;
+
     greeks.delta = standardNormalCDF(d1) - 1;
-    
-    // Calculate gamma (2nd derivative with respect to underlying price)
-    // Note: Gamma is the same for both calls and puts
-    greeks.gamma = standardNormalPDF(d1) / (spot_price * volatility * std::sqrt(time_to_expiry));
-    
-    // Calculate theta (1st derivative with respect to time)
-    // Note: Theta is usually expressed as the daily decay, so we convert from years to days
-    double theta = -spot_price * standardNormalPDF(d1) * volatility / (2 * std::sqrt(time_to_expiry)) 
-                   + risk_free_rate * strike_price * std::exp(-risk_free_rate * time_to_expiry) 
+    greeks.gamma = standardNormalPDF(d1) / (spot_price * sigma_sqrt_T);
+    double theta = -spot_price * standardNormalPDF(d1) * volatility / (2 * std::sqrt(time_to_expiry))
+                   + risk_free_rate * strike_price * std::exp(-risk_free_rate * time_to_expiry)
                    * standardNormalCDF(-d2);
-    greeks.theta = theta / 365.0; // Convert from per-year to per-day
-    
-    // Calculate vega (1st derivative with respect to volatility)
-    // Note: Vega is traditionally expressed as change for a 1% change in volatility
-    // Note: Vega is the same for both calls and puts
+    greeks.theta = theta / 365.0;
     greeks.vega = spot_price * std::sqrt(time_to_expiry) * standardNormalPDF(d1) / 100.0;
-    
-    // Calculate rho (1st derivative with respect to interest rate)
-    // Note: Rho is traditionally expressed as change for a 1% change in interest rate
-    greeks.rho = -strike_price * time_to_expiry * std::exp(-risk_free_rate * time_to_expiry) 
-                * standardNormalCDF(-d2) / 100.0;
-    
+    greeks.rho = -strike_price * time_to_expiry * std::exp(-risk_free_rate * time_to_expiry)
+                 * standardNormalCDF(-d2) / 100.0;
+
     return greeks;
 }
